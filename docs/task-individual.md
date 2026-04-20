@@ -314,19 +314,13 @@ Bạn phải giải thích được:
     * trace slow
     * log ok
 
-👉 Đây là phần giảng viên thích nhất 🔥
+
 
 ---
 
 # ⚡ Kết luận
 
-* Lab này KHÔNG phải coding nhiều
-* Nó là:
 
-> 🔥 “Bạn debug system như 1 AI Engineer thật”
 
 ---
 
-Nếu bạn muốn, mình có thể:
-👉 viết sẵn code chuẩn cho Member A (pass 100/100 validate_logs)
-👉 hoặc mock luôn dashboard + kịch bản demo nói gì để ăn điểm tối đa 😈

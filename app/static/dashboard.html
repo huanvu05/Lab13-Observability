@@ -235,6 +235,59 @@
 
     <section class="grid">
       <article class="card wide">
+        <p class="label">Tester Input</p>
+        <h2 class="value" style="font-size: 1.8rem;">Gui request toi mo hinh</h2>
+        <p class="meta">Nhap du lieu thu nghiem va gui truc tiep toi <code>/chat</code>. Dashboard se cap nhat lai metrics ngay sau khi co response.</p>
+        <form id="chat-form" style="margin-top: 16px;">
+          <div class="mini-grid">
+            <label class="mini">
+              <span class="label">User ID</span>
+              <input id="user-id" name="user_id" type="text" value="u_tester_01" required style="width: 100%; margin-top: 8px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; font: inherit; background: #fffdf8;">
+            </label>
+            <label class="mini">
+              <span class="label">Session ID</span>
+              <input id="session-id" name="session_id" type="text" value="s_demo_01" required style="width: 100%; margin-top: 8px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; font: inherit; background: #fffdf8;">
+            </label>
+            <label class="mini">
+              <span class="label">Feature</span>
+              <select id="feature" name="feature" style="width: 100%; margin-top: 8px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 12px; font: inherit; background: #fffdf8;">
+                <option value="qa" selected>qa</option>
+                <option value="summary">summary</option>
+              </select>
+            </label>
+          </div>
+          <label style="display: block; margin-top: 12px;">
+            <span class="label">Message</span>
+            <textarea id="message" name="message" required rows="5" style="width: 100%; margin-top: 8px; padding: 14px; border: 1px solid var(--border); border-radius: 16px; font: inherit; background: #fffdf8; resize: vertical;">What is your refund policy? My email is tester@example.com</textarea>
+          </label>
+          <div class="topbar" style="margin-top: 14px;">
+            <button id="submit-btn" type="submit" style="padding: 12px 18px; border: 0; border-radius: 999px; background: var(--accent); color: white; font: inherit; cursor: pointer;">Send to /chat</button>
+            <div class="pill">Status: <strong id="submit-status">Ready</strong></div>
+          </div>
+        </form>
+      </article>
+
+      <article class="card wide">
+        <p class="label">Latest Response</p>
+        <h2 class="value" id="response-title" style="font-size: 1.8rem;">Chua co request nao duoc gui</h2>
+        <p class="meta" id="response-meta">Correlation ID, latency va token se hien tai day sau khi tester submit.</p>
+        <div class="mini-grid">
+          <div class="mini"><span class="label">Correlation ID</span><strong id="resp-correlation">-</strong></div>
+          <div class="mini"><span class="label">Latency</span><strong id="resp-latency">-</strong></div>
+          <div class="mini"><span class="label">Quality</span><strong id="resp-quality">-</strong></div>
+        </div>
+        <div class="mini-grid">
+          <div class="mini"><span class="label">Tokens In</span><strong id="resp-tokens-in">-</strong></div>
+          <div class="mini"><span class="label">Tokens Out</span><strong id="resp-tokens-out">-</strong></div>
+          <div class="mini"><span class="label">Cost</span><strong id="resp-cost">-</strong></div>
+        </div>
+        <label style="display: block; margin-top: 12px;">
+          <span class="label">Answer</span>
+          <textarea id="response-answer" rows="6" readonly style="width: 100%; margin-top: 8px; padding: 14px; border: 1px solid var(--border); border-radius: 16px; font: inherit; background: #fffdf8; color: var(--ink); resize: vertical;">Response se hien o day.</textarea>
+        </label>
+      </article>
+
+      <article class="card wide">
         <p class="label">Latency</p>
         <h2 class="value" id="latency-p95">0 ms</h2>
         <p class="meta">P95 with P50/P99 support and a visible SLO line at 3000 ms.</p>
@@ -389,6 +442,18 @@
       el("status-text").textContent = "Auto refresh moi 15 giay";
     }
 
+    function renderResponse(data) {
+      el("response-title").textContent = "Request gui thanh cong";
+      el("response-meta").textContent = "Response moi nhat tu /chat duoc luu de tester doi chieu nhanh voi metrics.";
+      el("resp-correlation").textContent = data.correlation_id || "-";
+      el("resp-latency").textContent = fmtMs(data.latency_ms);
+      el("resp-quality").textContent = Number(data.quality_score || 0).toFixed(2);
+      el("resp-tokens-in").textContent = fmtNumber(data.tokens_in);
+      el("resp-tokens-out").textContent = fmtNumber(data.tokens_out);
+      el("resp-cost").textContent = fmtUsd(data.cost_usd);
+      el("response-answer").value = data.answer || "";
+    }
+
     async function loadMetrics() {
       try {
         const response = await fetch("/metrics", { cache: "no-store" });
@@ -402,7 +467,44 @@
       }
     }
 
+    async function submitChat(event) {
+      event.preventDefault();
+      const submitStatus = el("submit-status");
+      const submitButton = el("submit-btn");
+      submitStatus.textContent = "Sending...";
+      submitButton.disabled = true;
+      submitButton.style.opacity = "0.7";
+
+      const payload = {
+        user_id: el("user-id").value.trim(),
+        session_id: el("session-id").value.trim(),
+        feature: el("feature").value,
+        message: el("message").value.trim(),
+      };
+
+      try {
+        const response = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.detail || `HTTP ${response.status}`);
+        }
+        renderResponse(data);
+        submitStatus.textContent = "Success";
+        await loadMetrics();
+      } catch (error) {
+        submitStatus.textContent = `Failed: ${error.message}`;
+      } finally {
+        submitButton.disabled = false;
+        submitButton.style.opacity = "1";
+      }
+    }
+
     loadMetrics();
+    el("chat-form").addEventListener("submit", submitChat);
     setInterval(loadMetrics, POLL_MS);
   </script>
 </body>
