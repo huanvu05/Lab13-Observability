@@ -29,7 +29,7 @@ This template is intentionally incomplete. Teams are expected to finish TODOs du
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate # .venv\Scripts\Activate.ps1 for windows
 pip install -r requirements.txt
 cp .env.example .env
 uvicorn app.main:app --reload

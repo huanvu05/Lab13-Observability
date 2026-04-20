@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Observability Dashboard</title>
+  <style>
+    :root {
+      --bg: #f4efe6;
+      --surface: rgba(255, 253, 248, 0.86);
+      --card: #fffaf2;
+      --ink: #1c1a17;
+      --muted: #6d655d;
+      --accent: #0f766e;
+      --accent-soft: #cdeee9;
+      --warn: #c2410c;
+      --warn-soft: #fed7aa;
+      --danger: #b91c1c;
+      --danger-soft: #fecaca;
+      --border: rgba(28, 26, 23, 0.08);
+      --shadow: 0 20px 50px rgba(28, 26, 23, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(15, 118, 110, 0.16), transparent 28%),
+        radial-gradient(circle at top right, rgba(194, 65, 12, 0.12), transparent 24%),
+        linear-gradient(180deg, #f7f1e6 0%, #f1eadf 100%);
+    }
+
+    .page {
+      width: min(1200px, calc(100% - 32px));
+      margin: 24px auto 40px;
+    }
+
+    .hero {
+      padding: 28px;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      background: var(--surface);
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 3vw, 3.4rem);
+      line-height: 1;
+    }
+
+    .sub {
+      max-width: 760px;
+      margin: 14px 0 0;
+      font-size: 1rem;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+
+    .topbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin-top: 18px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: white;
+      border: 1px solid var(--border);
+      font-size: 14px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .card {
+      grid-column: span 4;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+    }
+
+    .card.wide {
+      grid-column: span 6;
+    }
+
+    .label {
+      margin: 0;
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .value {
+      margin: 10px 0 8px;
+      font-size: clamp(1.8rem, 2.4vw, 2.6rem);
+      line-height: 1.05;
+    }
+
+    .meta, .list {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .bar {
+      position: relative;
+      height: 12px;
+      margin-top: 14px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #efe6d9;
+    }
+
+    .bar > span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--accent), #14b8a6);
+      width: 0;
+      transition: width 0.4s ease;
+    }
+
+    .threshold {
+      position: absolute;
+      top: -4px;
+      bottom: -4px;
+      width: 2px;
+      background: var(--warn);
+      opacity: 0.85;
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .mini {
+      padding: 12px;
+      border-radius: 16px;
+      background: white;
+      border: 1px solid var(--border);
+    }
+
+    .mini strong {
+      display: block;
+      font-size: 1.1rem;
+      margin-top: 6px;
+    }
+
+    .state-ok {
+      color: var(--accent);
+    }
+
+    .state-warn {
+      color: var(--warn);
+    }
+
+    .state-danger {
+      color: var(--danger);
+    }
+
+    .list {
+      padding-left: 18px;
+    }
+
+    .list li + li {
+      margin-top: 6px;
+    }
+
+    .footer {
+      margin-top: 16px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    @media (max-width: 920px) {
+      .card,
+      .card.wide {
+        grid-column: span 12;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <p class="eyebrow">Layer 2 Dashboard</p>
+      <h1>Observability Snapshot</h1>
+      <p class="sub">Trang này tự làm mới dữ liệu từ <code>/metrics</code> mỗi 15 giây để bạn demo traffic, latency, error, cost, token và quality ngay trên web.</p>
+      <div class="topbar">
+        <div class="pill"><span class="dot"></span><span id="status-text">Dang tai du lieu...</span></div>
+        <div class="pill">Refreshed: <strong id="updated-at">-</strong></div>
+        <div class="pill">Endpoint: <strong>/metrics</strong></div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card wide">
+        <p class="label">Latency</p>
+        <h2 class="value" id="latency-p95">0 ms</h2>
+        <p class="meta">P95 with P50/P99 support and a visible SLO line at 3000 ms.</p>
+        <div class="bar">
+          <span id="latency-bar"></span>
+          <i class="threshold" style="left: 75%"></i>
+        </div>
+        <div class="mini-grid">
+          <div class="mini"><span class="label">P50</span><strong id="latency-p50">0 ms</strong></div>
+          <div class="mini"><span class="label">P95</span><strong id="latency-p95-mini">0 ms</strong></div>
+          <div class="mini"><span class="label">P99</span><strong id="latency-p99">0 ms</strong></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <p class="label">Traffic</p>
+        <h2 class="value" id="traffic">0</h2>
+        <p class="meta">Tong so request da duoc app ghi nhan trong bo nho hien tai.</p>
+      </article>
+
+      <article class="card">
+        <p class="label">Error Rate</p>
+        <h2 class="value" id="error-rate">0%</h2>
+        <p class="meta" id="error-summary">Chua co loi.</p>
+      </article>
+
+      <article class="card">
+        <p class="label">Cost</p>
+        <h2 class="value" id="cost-total">$0.0000</h2>
+        <p class="meta">Total cost with average cost per request.</p>
+        <div class="mini-grid">
+          <div class="mini"><span class="label">Average</span><strong id="cost-avg">$0.0000</strong></div>
+          <div class="mini"><span class="label">Budget SLO</span><strong>$2.50/day</strong></div>
+          <div class="mini"><span class="label">Health</span><strong id="cost-health">Stable</strong></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <p class="label">Tokens</p>
+        <h2 class="value" id="tokens-total">0</h2>
+        <p class="meta">Tong token input va output trong phien hien tai.</p>
+        <div class="mini-grid">
+          <div class="mini"><span class="label">Input</span><strong id="tokens-in">0</strong></div>
+          <div class="mini"><span class="label">Output</span><strong id="tokens-out">0</strong></div>
+          <div class="mini"><span class="label">Ratio</span><strong id="token-ratio">0.00</strong></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <p class="label">Quality Score</p>
+        <h2 class="value" id="quality">0.00</h2>
+        <p class="meta">Heuristic quality proxy with target threshold at 0.75.</p>
+        <div class="bar">
+          <span id="quality-bar"></span>
+          <i class="threshold" style="left: 75%"></i>
+        </div>
+      </article>
+
+      <article class="card wide">
+        <p class="label">Error Breakdown</p>
+        <ul class="list" id="error-breakdown">
+          <li>Khong co error nao duoc ghi nhan.</li>
+        </ul>
+      </article>
+    </section>
+
+    <p class="footer">Meo demo: chay <code>python scripts/load_test.py</code>, sau do bat incident bang <code>python scripts/inject_incident.py --scenario rag_slow</code> hoac <code>tool_fail</code> de thay dashboard thay doi.</p>
+  </main>
+
+  <script>
+    const POLL_MS = 15000;
+    const el = (id) => document.getElementById(id);
+
+    function fmtNumber(value) {
+      return Number(value || 0).toLocaleString("en-US");
+    }
+
+    function fmtMs(value) {
+      return `${Math.round(Number(value || 0))} ms`;
+    }
+
+    function fmtUsd(value) {
+      return `$${Number(value || 0).toFixed(4)}`;
+    }
+
+    function setState(node, healthy, warn, danger) {
+      node.classList.remove("state-ok", "state-warn", "state-danger");
+      node.classList.add(danger ? "state-danger" : warn ? "state-warn" : "state-ok");
+      return node;
+    }
+
+    function renderErrors(metrics) {
+      const breakdown = metrics.error_breakdown || {};
+      const keys = Object.keys(breakdown);
+      const list = el("error-breakdown");
+      if (!keys.length) {
+        list.innerHTML = "<li>Khong co error nao duoc ghi nhan.</li>";
+        el("error-summary").textContent = "Chua co loi.";
+        return 0;
+      }
+
+      const totalErrors = keys.reduce((sum, key) => sum + Number(breakdown[key] || 0), 0);
+      list.innerHTML = keys
+        .sort((a, b) => breakdown[b] - breakdown[a])
+        .map((key) => `<li>${key}: ${fmtNumber(breakdown[key])}</li>`)
+        .join("");
+      el("error-summary").textContent = `${fmtNumber(totalErrors)} loi trong ${fmtNumber(metrics.traffic)} request.`;
+      return totalErrors;
+    }
+
+    function render(metrics) {
+      const traffic = Number(metrics.traffic || 0);
+      const totalErrors = renderErrors(metrics);
+      const errorRate = traffic > 0 ? (totalErrors / traffic) * 100 : 0;
+      const p95 = Number(metrics.latency_p95 || 0);
+      const quality = Number(metrics.quality_avg || 0);
+      const totalCost = Number(metrics.total_cost_usd || 0);
+      const avgCost = Number(metrics.avg_cost_usd || 0);
+      const tokensIn = Number(metrics.tokens_in_total || 0);
+      const tokensOut = Number(metrics.tokens_out_total || 0);
+      const totalTokens = tokensIn + tokensOut;
+
+      el("latency-p50").textContent = fmtMs(metrics.latency_p50);
+      el("latency-p95").textContent = fmtMs(p95);
+      el("latency-p95-mini").textContent = fmtMs(p95);
+      el("latency-p99").textContent = fmtMs(metrics.latency_p99);
+      el("latency-bar").style.width = `${Math.min((p95 / 4000) * 100, 100)}%`;
+
+      el("traffic").textContent = fmtNumber(traffic);
+
+      const errorRateNode = el("error-rate");
+      errorRateNode.textContent = `${errorRate.toFixed(2)}%`;
+      setState(errorRateNode, errorRate < 2, errorRate >= 2 && errorRate < 5, errorRate >= 5);
+
+      el("cost-total").textContent = fmtUsd(totalCost);
+      el("cost-avg").textContent = fmtUsd(avgCost);
+      const costHealth = el("cost-health");
+      costHealth.textContent = totalCost > 2.5 ? "Over budget" : totalCost > 1.25 ? "Watch" : "Stable";
+      setState(costHealth, totalCost <= 1.25, totalCost > 1.25 && totalCost <= 2.5, totalCost > 2.5);
+
+      el("tokens-total").textContent = fmtNumber(totalTokens);
+      el("tokens-in").textContent = fmtNumber(tokensIn);
+      el("tokens-out").textContent = fmtNumber(tokensOut);
+      el("token-ratio").textContent = tokensIn > 0 ? (tokensOut / tokensIn).toFixed(2) : "0.00";
+
+      const qualityNode = el("quality");
+      qualityNode.textContent = quality.toFixed(2);
+      setState(qualityNode, quality >= 0.75, quality >= 0.6 && quality < 0.75, quality < 0.6);
+      el("quality-bar").style.width = `${Math.min(quality * 100, 100)}%`;
+
+      el("updated-at").textContent = new Date().toLocaleTimeString();
+      el("status-text").textContent = "Auto refresh moi 15 giay";
+    }
+
+    async function loadMetrics() {
+      try {
+        const response = await fetch("/metrics", { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const metrics = await response.json();
+        render(metrics);
+      } catch (error) {
+        el("status-text").textContent = `Khong tai duoc /metrics: ${error.message}`;
+      }
+    }
+
+    loadMetrics();
+    setInterval(loadMetrics, POLL_MS);
+  </script>
+</body>
+</html>
