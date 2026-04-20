@@ -3,9 +3,9 @@
 > **Instruction**: Fill in all sections below. This report is designed to be parsed by an automated grading assistant. Ensure all tags (e.g., `[GROUP_NAME]`) are preserved.
 
 ## 1. Team Metadata
-- [GROUP_NAME]: X03_C401
-- [REPO_URL]: https://github.com/huanvu05/Lab13-Observability
-- [MEMBERS]:
+- GROUP_NAME: X03_C401
+- REPO_URL: https://github.com/huanvu05/Lab13-Observability
+- MEMBERS: task-individual.md
   - Member A: Vũ Văn Huân | Role: Logging & Middleware
   - Member B: Hoàng Quang Thắng | Role: Tracing + Metrics + Dashboard
 
@@ -13,9 +13,9 @@
 ---
 
 ## 2. Group Performance (Auto-Verified)
-- [VALIDATE_LOGS_FINAL_SCORE]: 100/100
-- [TOTAL_TRACES_COUNT]: 431 (Unique correlation IDs found)
-- [PII_LEAKS_FOUND]: 0
+- VALIDATE_LOGS_FINAL_SCORE: 100/100
+- TOTAL_TRACES_COUNT: 431 (Unique correlation IDs found)
+- PII_LEAKS_FOUND: 0
 
 ---
 
