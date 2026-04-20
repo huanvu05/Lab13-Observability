@@ -3,7 +3,7 @@
 > **Instruction**: Fill in all sections below. This report is designed to be parsed by an automated grading assistant. Ensure all tags (e.g., `[GROUP_NAME]`) are preserved.
 
 ## 1. Team Metadata
-- [GROUP_NAME]: XYZ_C401
+- [GROUP_NAME]: X03_C401
 - [REPO_URL]: https://github.com/huanvu05/Lab13-Observability
 - [MEMBERS]:
   - Member A: Vũ Văn Huân | Role: Logging & Middleware
