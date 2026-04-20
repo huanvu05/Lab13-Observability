@@ -6,7 +6,7 @@ Required Layer-2 panels:
 3. Error rate with breakdown
 4. Cost over time
 5. Tokens in/out
-6. Quality proxy (heuristic, thumbs, or regenerate rate)
+6. Qu proxy (heuristic, thumbs, or regenerate rate)
 
 Quality bar:
 - default time range = 1 hour
