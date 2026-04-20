@@ -7,7 +7,7 @@ from . import metrics
 from .mock_llm import FakeLLM
 from .mock_rag import retrieve
 from .pii import hash_user_id, summarize_text
-from .tracing import langfuse_context, observe
+from .tracing import init_langfuse, observe
 
 
 @dataclass
@@ -24,6 +24,7 @@ class LabAgent:
     def __init__(self, model: str = "claude-sonnet-4-5") -> None:
         self.model = model
         self.llm = FakeLLM(model=model)
+        self.langfuse = init_langfuse()
 
     @observe()
     def run(self, user_id: str, feature: str, session_id: str, message: str) -> AgentResult:
@@ -35,15 +36,22 @@ class LabAgent:
         latency_ms = int((time.perf_counter() - started) * 1000)
         cost_usd = self._estimate_cost(response.usage.input_tokens, response.usage.output_tokens)
 
-        langfuse_context.update_current_trace(
+        self.langfuse.update_current_trace(
             user_id=hash_user_id(user_id),
             session_id=session_id,
             tags=["lab", feature, self.model],
+            input={"feature": feature, "message": summarize_text(message)},
+            output={"answer_preview": summarize_text(response.text)},
+            metadata={
+                "doc_count": len(docs),
+                "query_preview": summarize_text(message),
+                "quality_score": quality_score,
+                "tokens_in": response.usage.input_tokens,
+                "tokens_out": response.usage.output_tokens,
+                "cost_usd": cost_usd,
+            },
         )
-        langfuse_context.update_current_observation(
-            metadata={"doc_count": len(docs), "query_preview": summarize_text(message)},
-            usage_details={"input": response.usage.input_tokens, "output": response.usage.output_tokens},
-        )
+        self.langfuse.flush()
 
         metrics.record_request(
             latency_ms=latency_ms,

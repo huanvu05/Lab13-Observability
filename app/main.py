@@ -14,7 +14,7 @@ from .metrics import record_error, snapshot
 from .middleware import CorrelationIdMiddleware
 from .pii import hash_user_id, summarize_text
 from .schemas import ChatRequest, ChatResponse
-from .tracing import tracing_enabled
+from .tracing import init_langfuse, tracing_enabled
 
 configure_logging()
 log = get_logger()
@@ -26,6 +26,7 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 @app.on_event("startup")
 async def startup() -> None:
+    init_langfuse()
     log.info(
         "app_started",
         service=os.getenv("APP_NAME", "day13-observability-lab"),
